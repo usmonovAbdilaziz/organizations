@@ -1,0 +1,129 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String   @id @default(uuid())
+  phoneNumber String   @unique // Telefon raqami uchun String yaxshi (masalan: +998...)
+  username    String   @unique
+  fullName    String?
+  role        UserRole @default(CLIENT)
+
+  organizationId String? // Agar foydalanuvchi biror tashkilotga tegishli bo'lsa
+  branchId       String? // Agar foydalanuvchi aniq bir filialda ishlasa
+
+  // Relations
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  branch       Branch?       @relation(fields: [branchId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Organization {
+  id           String           @id @default(cuid())
+  name         String
+  type         OrganizationType @default(RESTAURANT)
+  description  String?          @db.Text
+  logo         String? // Logo uchun URL
+  website      String?
+  inn          Int? // TIN (Tax Identification Number)
+  orgStructure OrganizationStructure @default(MCHJ) // Tashkilot tuzilishi (masalan: "LLC", "JSC", "Sole Proprietorship")
+
+  // Bog'liqliklar
+  users      User[] // Tashkilot egalari/adminlari
+  branches   Branch[] // Tashkilot filiallari
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Branch {
+  id      String  @id @default(cuid())
+  name    String // Filial nomi (masalan: "Chilonzor filiali")
+  address String? // To'liq manzili
+
+  // Geolokatsiya
+  lat          Float // Latitude (Kenglik)
+  long         Float // Longitude (Uzunlik)
+  code         Int // Filial kodi (masalan: 101, 102, ...)
+  // Aloqa
+  phone        String?
+  workingHours String? // Masalan: "09:00-22:00"
+
+  // Bog'liqliklar
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  staff          User[] 
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id   String  @id @default(cuid())
+  name String
+  slug String  @unique // URL uchun (masalan: "milliy-taomlar")
+  icon String? // Categoriya uchun rasm yoki icon nomi
+
+  // O'z-o'ziga bog'liqlik (Parent-Child)
+  parentId      String?
+  parent        Category?  @relation("SubCategories", fields: [parentId], references: [id])
+  subCategories Category[] @relation("SubCategories")
+
+  // Tashkilotlar bilan bog'liqlik
+  organizations Organization[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OrganizationStructure {
+  MCHJ
+  YATT
+  AJ
+  XK
+  QK
+  NNT
+  DM
+  DUK
+  MU
+  FILIAL
+}
+
+//enums
+//user
+enum UserRole {
+  SUPER_ADMIN // Tizim egasi (Siz)
+  ORGANIZATION //Tashkilotlar egasi
+  DIRECTOR // Tashkilot direktori
+  ADMIN // Tashkilot egasi (Owner)
+  MANAGER // Filial menejeri
+  KASSIR // Kassir
+  WAITER // Ofitsant
+  RUNNER // Runner
+  CLIENT // Oddiy mijoz (CLIENT)
+}
+
+//organization
+enum OrganizationType {
+  RESTAURANT
+  MEDICAL
+  RETAIL
+  EDUCATION
+  OTHER
+}
