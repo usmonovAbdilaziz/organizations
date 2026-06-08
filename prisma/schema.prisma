@@ -33,14 +33,15 @@ model User {
 }
 
 model Organization {
-  id           String           @id @default(cuid())
+  id           String                @id @default(cuid())
   name         String
-  type         OrganizationType @default(RESTAURANT)
-  description  String?          @db.Text
+  type         OrganizationType      @default(RESTAURANT)
+  description  String?               @db.Text
   logo         String? // Logo uchun URL
   website      String?
   inn          Int? // TIN (Tax Identification Number)
   orgStructure OrganizationStructure @default(MCHJ) // Tashkilot tuzilishi (masalan: "LLC", "JSC", "Sole Proprietorship")
+  isActive     Boolean               @default(true)
 
   // Bog'liqliklar
   users      User[] // Tashkilot egalari/adminlari
@@ -68,7 +69,7 @@ model Branch {
   // Bog'liqliklar
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id])
-  staff          User[] 
+  staff          User[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
