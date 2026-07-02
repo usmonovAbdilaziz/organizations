@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
+import { hashPassword } from '../auth/utils/password';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma';
 import { errorResponse, successResponse } from 'src/utils/response';
@@ -21,7 +22,7 @@ export class UserService {
   ) {}
   async create(createUserDto: CreateUserDto) {
     try {
-      const { phoneNumber, username, organizationId, branchId } = createUserDto;
+      const { phoneNumber, username, organizationId, branchId, password } = createUserDto;
       const existingUser = await this.userServise.user.findFirst({
         where: { OR: [{ phoneNumber }, { username }] },
       });
@@ -52,7 +53,17 @@ export class UserService {
         }
       }
 
-      return this.userServise.user.create({ data: createUserDto });
+      // prepare data for Prisma (do not store raw password)
+      const data: any = { ...createUserDto };
+      if (password) {
+        // hash password and store salt/hash instead
+        const { hash, salt } = await hashPassword(password);
+        delete data.password;
+        data.passwordHash = hash;
+        data.passwordSalt = salt;
+      }
+
+      return this.userServise.user.create({ data });
     } catch (error) {
       errorResponse(error);
     }
@@ -83,6 +94,17 @@ export class UserService {
       errorResponse(error);
     }
   }
+async findByPhoneNumber(phone:string){
+  try {
+    const user = await this.userServise.user.findUnique({where:{phoneNumber:phone}})
+    if(!user){
+      throw new NotFoundException("User not found")
+    }
+    return user
+  } catch (error) {
+    errorResponse(error)
+  }
+}
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
@@ -120,11 +142,6 @@ export class UserService {
         if (!branch) {
           throw new NotFoundException('Branch not found');
         }
-        if (role !== UserRole.DIRECTOR) {
-          throw new BadRequestException(
-            'User role must be DIRECTOR to attach to a branch',
-          );
-        }
       }
 
       const newUser = this.userServise.user.update({
@@ -145,6 +162,19 @@ export class UserService {
         data: { role: updateRole.role },
       });
       return user;
+    } catch (error) {
+      errorResponse(error);
+    }
+  }
+
+  /** Parolni yangilash (hash qilinadi) */
+  async updatePassword(id: string, newPassword: string) {
+    try {
+      const { hash, salt } = await hashPassword(newPassword);
+      return await this.userServise.user.update({
+        where: { id },
+        data: { passwordHash: hash, passwordSalt: salt },
+      });
     } catch (error) {
       errorResponse(error);
     }

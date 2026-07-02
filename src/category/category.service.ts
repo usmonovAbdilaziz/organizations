@@ -10,7 +10,9 @@ export class CategoryService {
   async create(createCategoryDto: CreateCategoryDto) {
     try {
       const { name } = createCategoryDto
+
       const existsCategory = await this.categoryService.category.findFirst({ where: { name } })
+      console.log(existsCategory);
       if (existsCategory) {
         throw new ConflictException("Category already exists")
       }

@@ -15,7 +15,6 @@ export const successResponse = (
 });
 
 export const errorResponse = (error: any) => {
-
     // NestJS HttpException bo'lsa
     if (error instanceof HttpException) {
         throw new HttpException(

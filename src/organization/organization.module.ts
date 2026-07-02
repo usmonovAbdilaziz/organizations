@@ -3,9 +3,10 @@ import { OrganizationService } from './organization.service';
 import { OrganizationController } from './organization.controller';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { CategoryModule } from 'src/category/category.module';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
-  imports:[PrismaModule,CategoryModule],
+  imports:[PrismaModule,CategoryModule,AuthModule],
   controllers: [OrganizationController],
   providers: [OrganizationService],
 })

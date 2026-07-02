@@ -32,12 +32,15 @@ export class UserController {
     @Param('id') id: string,
     @Body() updateUserDto: AttachmentUserDto,
   ) {
-
     return this.userService.updateAttachment(id, updateUserDto);
   }
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.userService.findOne(id);
+  }
+  @Get('phone-number/:phone')
+  findPhonenUmber(@Param('phone') phone: string) {
+    return this.userService.findByPhoneNumber(phone);
   }
 
   @Patch('/role/:id')

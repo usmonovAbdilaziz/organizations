@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -27,7 +28,7 @@ export class CreateOrganizationDto {
   })
   inn!: number;
 
-  @ApiProperty({required:true,example:"MCHJ"})
+  @ApiProperty({ required: true, example: "MCHJ" })
   @IsEnum(OrganizationStructure)
   orgStructure!: OrganizationStructure;
 
@@ -54,4 +55,9 @@ export class CreateOrganizationDto {
   @IsString()
   @IsNotEmpty()
   categoryId!: string;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean
 }
