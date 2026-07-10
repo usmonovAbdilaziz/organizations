@@ -16,6 +16,10 @@ export class CategoryController {
   findAll() {
     return this.categoryService.findAll();
   }
+  @Get('/parent/:parentId')
+  findParent (@Param('parentId') parentId:string){
+    return this.categoryService.findParent(parentId)
+  }
 
   @Get(':id')
   findOne(@Param('id') id: string) {

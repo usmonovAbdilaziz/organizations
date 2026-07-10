@@ -19,10 +19,11 @@ export class UserService {
     private readonly userServise: PrismaService,
     private readonly organizationService: PrismaService,
     private readonly branchService: PrismaService,
-  ) { }
+  ) {}
   async create(createUserDto: CreateUserDto) {
     try {
-      const { phoneNumber, username, organizationId, branchId, password } = createUserDto;
+      const { phoneNumber, username, organizationId, branchId, password } =
+        createUserDto;
       const existingUser = await this.userServise.user.findFirst({
         where: { OR: [{ phoneNumber }, { username }] },
       });
@@ -36,9 +37,10 @@ export class UserService {
       }
 
       if (organizationId) {
-        const organization = await this.organizationService.organization.findUnique({
-          where: { id: organizationId },
-        });
+        const organization =
+          await this.organizationService.organization.findUnique({
+            where: { id: organizationId },
+          });
         if (!organization) {
           throw new NotFoundException('Organization not found');
         }
@@ -96,23 +98,30 @@ export class UserService {
   }
   async findByPhoneNumber(phone: string) {
     try {
-      const user = await this.userServise.user.findUnique({ where: { phoneNumber: phone } })
+      const user = await this.userServise.user.findUnique({
+        where: { phoneNumber: phone },
+      });
       if (!user) {
-        throw new NotFoundException("User not found")
+        throw new NotFoundException('User not found');
       }
-      return user
+      return user;
     } catch (error) {
-      errorResponse(error)
+      errorResponse(error);
     }
   }
   async findStaffOrg(branchId: string) {
-
-    const branches = await this.branchService.branch.findUnique({ where: { id: branchId } })
+    const branches = await this.branchService.branch.findUnique({
+      where: { id: branchId },
+    });
     if (!branches) {
-      throw new NotFoundException("Filial topilmadi")
+      throw new NotFoundException('Filial topilmadi');
     }
-    const allUsers = await this.userServise.user.findMany({ where: { OR: [{ organizationId: branches.organizationId }, { branchId }] } })
-    return allUsers
+    const allUsers = await this.userServise.user.findMany({
+      where: {
+        OR: [{ organizationId: branches.organizationId }, { branchId }],
+      },
+    });
+    return allUsers;
   }
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
@@ -127,13 +136,19 @@ export class UserService {
   }
   async updateAttachment(id: string, updateUserDto: AttachmentUserDto) {
     try {
-      const { organizationId, branchId, role } = updateUserDto;
-
+      const { organizationId, branchId, role, isMultply } = updateUserDto;
+      let branchs: null | string = null;
+      let organizations: null | string = null;
       if (organizationId) {
         const organization =
           await this.organizationService.organization.findUnique({
             where: { id: organizationId },
           });
+        if (isMultply) {
+          organizations = null;
+        } else {
+          organizations = organizationId;
+        }
         if (!organization) {
           throw new NotFoundException('Organization not found');
         }
@@ -147,6 +162,11 @@ export class UserService {
         const branch = await this.branchService.branch.findUnique({
           where: { id: branchId },
         });
+        if (isMultply) {
+          branchs = null;
+        } else {
+          branchs = branchId;
+        }
         if (!branch) {
           throw new NotFoundException('Branch not found');
         }
@@ -154,7 +174,11 @@ export class UserService {
 
       const newUser = this.userServise.user.update({
         where: { id },
-        data: updateUserDto,
+        data: {
+          ...updateUserDto,
+          branchId: branchs,
+          organizationId: organizations,
+        },
       });
 
       return newUser;

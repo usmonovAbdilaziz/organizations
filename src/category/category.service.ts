@@ -6,61 +6,92 @@ import { errorResponse } from 'src/utils/response';
 
 @Injectable()
 export class CategoryService {
-  constructor(private readonly categoryService: PrismaService) { }
+  constructor(private readonly categoryService: PrismaService) {}
   async create(createCategoryDto: CreateCategoryDto) {
     try {
-      const { name } = createCategoryDto
-
-      const existsCategory = await this.categoryService.category.findFirst({ where: { name } })
-      console.log(existsCategory);
+      const { name } = createCategoryDto;
+      const existsCategory = await this.categoryService.category.findFirst({
+        where: { name },
+      });
       if (existsCategory) {
-        throw new ConflictException("Category already exists")
+        throw new ConflictException('Category already exists');
       }
-      const category = await this.categoryService.category.create({ data: createCategoryDto })
-      return category
+      const parentId =
+        createCategoryDto.parentId === ''
+          ? undefined
+          : createCategoryDto.parentId;
+      const category = await this.categoryService.category.create({
+        data: { ...createCategoryDto, parentId },
+      });
+      return category;
     } catch (error) {
-      errorResponse(error)
+      console.log(error);
+
+      errorResponse(error);
     }
   }
 
   async findAll() {
     try {
-      const categories = await this.categoryService.category.findMany({ orderBy: { createdAt: "desc" } })
-      return categories
+      const categories = await this.categoryService.category.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+      return categories;
     } catch (error) {
-      errorResponse(error)
+      errorResponse(error);
     }
   }
 
   async findOne(id: string) {
     try {
-      const category = await this.categoryService.category.findFirst({ where: { id } })
+      const category = await this.categoryService.category.findFirst({
+        where: { id },
+      });
       if (!category) {
-        throw new NotFoundException("Category not found")
+        throw new NotFoundException('Category not found');
       }
-      return category
+      return category;
     } catch (error) {
-      errorResponse(error)
+      errorResponse(error);
+    }
+  }
+  async findParent(parentId: string) {
+    try {
+      const parentCategory = this.categoryService.category.findMany({
+        where: { parentId },
+      });
+      if (!parentCategory) {
+        throw new NotFoundException('Parent category not found');
+      }
+      return parentCategory;
+    } catch (error) {
+      errorResponse(error);
     }
   }
 
   async update(id: string, updateCategoryDto: UpdateCategoryDto) {
     try {
-      await this.findOne(id)
-      const newCategory = await this.categoryService.category.update({ where: { id }, data: updateCategoryDto })
-      return newCategory
+      await this.findOne(id);
+      const newCategory = await this.categoryService.category.update({
+        where: { id },
+        data: updateCategoryDto,
+      });
+      return newCategory;
     } catch (error) {
-      errorResponse(error)
+      errorResponse(error);
     }
   }
 
   async remove(id: string) {
     try {
-      await this.findOne(id)
-      const delCategory = await this.categoryService.category.delete({ where: { id } })
-      return delCategory
+      await this.findOne(id);
+      const delCategory = await this.categoryService.category.delete({
+        where: { id },
+      });
+      return delCategory;
     } catch (error) {
-      errorResponse(error)
+      console.log(error)
+      errorResponse(error);
     }
   }
 }

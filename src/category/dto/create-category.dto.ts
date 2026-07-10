@@ -1,27 +1,33 @@
-import {
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from "class-validator";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCategoryDto {
-  @ApiProperty({ example: "Milliy taomlar" })
+  @ApiProperty({ example: 'Milliy taomlar' })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
-  @ApiProperty({ example: "milliy-taomlar" })
+  @ApiProperty({ example: 'milliy-taomlar' })
   @IsString()
   @IsNotEmpty()
-  slug: string;
+  slug!: string;
 
-  @ApiPropertyOptional({ example: "🍽️" })
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+
+  @ApiProperty({ example: 'https://example.com' })
+  @IsString()
+  @IsOptional()
+  image?: string;
+
+  @ApiPropertyOptional({ example: '🍽️' })
   @IsOptional()
   @IsString()
   icon?: string;
 
-  @ApiPropertyOptional({ example: "clx123abc..." })
+  @ApiPropertyOptional({ example: 'clx123abc...' })
   @IsOptional()
   @IsString()
   parentId?: string;

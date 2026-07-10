@@ -101,13 +101,16 @@ model Branch {
 }
 
 model Category {
-  id   String  @id @default(cuid())
-  name String
-  slug String  @unique // URL uchun (masalan: "milliy-taomlar")
-  icon String? // Categoriya uchun rasm yoki icon nomi
+  id   String  @id @default(cuid()) //id
+  name String //categoriya nomi Restoran Mehmonxona Dorixona Universitet
+  slug String  @unique // URL uchun (masalan: "milliy-taomlar") URL uchun ishlatiladi. Har doim unikal bo'lishi kerak.
+  icon String? // Categoriya uchun rasm yoki icon nomi.Kategoriya ikonkasini saqlaydi.
+  image String? //categoriya rasmi
 
+  isActive Boolean @default(true)//categoriya faoliyati
+  order    Int     @default(0) //categoriyalar tartibi. Chiqarilish tartibini belgilaydi.orderBy: { order: "asc"}
   // O'z-o'ziga bog'liqlik (Parent-Child)
-  parentId      String?
+  parentId      String? // parent qilish
   parent        Category?  @relation("SubCategories", fields: [parentId], references: [id])
   subCategories Category[] @relation("SubCategories")
 
