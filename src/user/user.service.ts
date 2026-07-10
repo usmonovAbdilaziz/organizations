@@ -19,7 +19,7 @@ export class UserService {
     private readonly userServise: PrismaService,
     private readonly organizationService: PrismaService,
     private readonly branchService: PrismaService,
-  ) {}
+  ) { }
   async create(createUserDto: CreateUserDto) {
     try {
       const { phoneNumber, username, organizationId, branchId, password } = createUserDto;
@@ -94,18 +94,26 @@ export class UserService {
       errorResponse(error);
     }
   }
-async findByPhoneNumber(phone:string){
-  try {
-    const user = await this.userServise.user.findUnique({where:{phoneNumber:phone}})
-    if(!user){
-      throw new NotFoundException("User not found")
+  async findByPhoneNumber(phone: string) {
+    try {
+      const user = await this.userServise.user.findUnique({ where: { phoneNumber: phone } })
+      if (!user) {
+        throw new NotFoundException("User not found")
+      }
+      return user
+    } catch (error) {
+      errorResponse(error)
     }
-    return user
-  } catch (error) {
-    errorResponse(error)
   }
-}
+  async findStaffOrg(branchId: string) {
 
+    const branches = await this.branchService.branch.findUnique({ where: { id: branchId } })
+    if (!branches) {
+      throw new NotFoundException("Filial topilmadi")
+    }
+    const allUsers = await this.userServise.user.findMany({ where: { OR: [{ organizationId: branches.organizationId }, { branchId }] } })
+    return allUsers
+  }
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
       const newUser = this.userServise.user.update({

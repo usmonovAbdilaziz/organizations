@@ -16,7 +16,7 @@ import { AttachmentUserDto } from './dto/attachment-user.dto';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) { }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
@@ -42,7 +42,10 @@ export class UserController {
   findPhonenUmber(@Param('phone') phone: string) {
     return this.userService.findByPhoneNumber(phone);
   }
-
+  @Get('branch/:branchId')
+  findStaffOrg(@Param('branchId') branchId: string) {
+    return this.userService.findStaffOrg(branchId)
+  }
   @Patch('/role/:id')
   updateRole(@Param('id') id: string, @Body() updateRole: UpdateRoleDto) {
     return this.userService.updateRole(id, updateRole);
