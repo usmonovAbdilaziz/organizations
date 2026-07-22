@@ -1,25 +1,34 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { OrganizationStructure, OrganizationType } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
+  IsInt,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
   IsUrl,
   Max,
   Min,
+  ValidateNested,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OrganizationStructure, OrganizationType } from '@prisma/client';
+import { CreateSeoDto } from 'src/seo/dto/create-seo.dto';
 
 export class CreateOrganizationDto {
-  @ApiProperty({ example: 'My Restaurant' })
+  @ApiProperty({
+    example: 'My Restaurant',
+  })
   @IsString()
   @IsNotEmpty()
   name!: string;
 
-  @ApiProperty({ required: true, example: 123456789 })
-  @IsNumber()
+  @ApiProperty({
+    example: 123456789,
+    description: '9 xonali INN',
+  })
+  @Type(() => Number)
+  @IsInt()
   @Min(100000000, {
     message: 'INN must be 9 digits',
   })
@@ -28,36 +37,60 @@ export class CreateOrganizationDto {
   })
   inn!: number;
 
-  @ApiProperty({ required: true, example: "MCHJ" })
+  @ApiProperty({
+    enum: OrganizationStructure,
+    example: OrganizationStructure.MCHJ,
+  })
   @IsEnum(OrganizationStructure)
   orgStructure!: OrganizationStructure;
 
-  @ApiProperty({ enum: OrganizationType })
+  @ApiProperty({
+    enum: OrganizationType,
+    example: OrganizationType.RESTAURANT,
+  })
   @IsEnum(OrganizationType)
   type!: OrganizationType;
 
-  @ApiPropertyOptional({ example: 'Best restaurant in city' })
+  @ApiPropertyOptional({
+    example: 'Best restaurant in the city',
+  })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/logo.png' })
+  @ApiPropertyOptional({
+    example: 'https://example.com/logo.png',
+  })
   @IsOptional()
   @IsUrl()
   logo?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com' })
+  @ApiPropertyOptional({
+    example: 'https://example.com',
+  })
   @IsOptional()
   @IsUrl()
   website?: string;
 
-  @ApiProperty({ example: 'clx123abc...' })
+  @ApiProperty({
+    example: 'cmf6r2v7g0000abc123xyz',
+  })
   @IsString()
   @IsNotEmpty()
   categoryId!: string;
 
-  @ApiProperty({ example: false })
-  @IsBoolean()
+  @ApiPropertyOptional({
+    example: true,
+  })
   @IsOptional()
-  isActive?: boolean
+  @IsBoolean()
+  isActive?: boolean;
+
+  @ApiPropertyOptional({
+    type: CreateSeoDto,
+    description: 'Optional SEO metadata. If not provided, will be auto-generated.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  seo?: CreateSeoDto;
 }

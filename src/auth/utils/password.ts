@@ -1,26 +1,18 @@
-import { scrypt, randomBytes, timingSafeEqual } from 'node:crypto';
-import { promisify } from 'util';
+import { Injectable } from '@nestjs/common';
+import * as argon2 from 'argon2';
 
-const scryptAsync = promisify(scrypt);
+@Injectable()
+export class PasswordService {
+  async hash(password: string): Promise<string> {
+    return argon2.hash(password, {
+      type: argon2.argon2id,
+      memoryCost: 65536,
+      timeCost: 3,
+      parallelism: 1,
+    });
+  }
 
-const SALT_BYTES = 16;
-const KEY_LENGTH = 64;
-
-/** Parolni hash qilish — salt va hash qaytaradi */
-export async function hashPassword(password: string): Promise<{ salt: string; hash: string }> {
-  const salt = randomBytes(SALT_BYTES).toString('base64');
-  const derived = (await scryptAsync(password, salt, KEY_LENGTH)) as Buffer;
-  return { salt, hash: derived.toString('base64') };
-}
-
-/** Parolni tekshirish — timing-safe comparison */
-export async function verifyPassword(
-  password: string,
-  salt: string,
-  expectedHash: string,
-): Promise<boolean> {
-  const derived = (await scryptAsync(password, salt, KEY_LENGTH)) as Buffer;
-  const expected = Buffer.from(expectedHash, 'base64');
-  if (derived.length !== expected.length) return false;
-  return timingSafeEqual(derived, expected);
+  async verify(hash: string, password: string): Promise<boolean> {
+    return argon2.verify(hash, password);
+  }
 }

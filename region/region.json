@@ -1,0 +1,99 @@
+[
+  {"id":12,
+    "nameUz": "Samarqand viloyati",
+    "nameRu": "Самаркандская область",
+    "nameEn": "Samarkand Region",
+    "slug": "samarkand-region"
+  },
+  {
+    "id":5,
+    "nameUz": "Toshkent shahar",
+    "nameRu": "город Ташкент",
+    "nameEn": "Tashkent City",
+    "slug": "tashkent-city"
+  },
+  {
+    "id":9,
+    "nameUz": "Andijon viloyati",
+    "nameRu": "Андижанская область",
+    "nameEn": "Andijan Region",
+    "slug": "andijan-region"
+  },
+  {
+    "id":2,
+    "nameUz": "Surxondaryo viloyati",
+    "nameRu": "Сурхандарьинская область",
+    "nameEn": "Surkhandarya Region",
+    "slug": "surkhandarya-region"
+  },
+  {
+    "id":4,
+    "nameUz": "Farg'ona viloyati",
+    "nameRu": "Ферганская область",
+    "nameEn": "Fergana Region",
+    "slug": "fergana-region"
+  },
+  {
+    "id":13,
+    "nameUz": "Qashqadaryo viloyati",
+    "nameRu": "Кашкадарьинская область",
+    "nameEn": "Kashkadarya Region",
+    "slug": "kashkadarya-region"
+  },
+  {
+    "id":6,
+    "nameUz": "Buxoro viloyati",
+    "nameRu": "Бухарская область",
+    "nameEn": "Bukhara Region",
+    "slug": "bukhara-region"
+  },
+  {
+    "id":1,
+    "nameUz": "Xorazm viloyati",
+    "nameRu": "Хорезмская область",
+    "nameEn": "Khorezm Region",
+    "slug": "khorezm-region"
+  },
+  {
+    "id":11,
+    "nameUz": "Navoiy viloyati",
+    "nameRu": "Навоийская область",
+    "nameEn": "Navoi Region",
+    "slug": "navoi-region"
+  },
+  {
+    "id":14,
+    "nameUz": "Toshkent viloyati",
+    "nameRu": "Ташкентская область",
+    "nameEn": "Tashkent Region",
+    "slug": "tashkent-region"
+  },
+  {
+    "id":10,
+    "nameUz": "Sirdaryo viloyati",
+    "nameRu": "Сырдарьинская область",
+    "nameEn": "Syrdarya Region",
+    "slug": "syrdarya-region"
+  },
+  {
+    "id":8,
+    "nameUz": "Jizzax viloyati",
+    "nameRu": "Джизакская область",
+    "nameEn": "Jizzakh Region",
+    "slug": "jizzakh-region"
+  },
+  {
+    "id":7,
+    "nameUz": "Qoraqalpog'iston Respublikasi",
+    "nameRu": "Республика Каракалпакстан",
+    "nameEn": "Republic of Karakalpakstan",
+    "slug": "republic-of-karakalpakstan"
+  },
+  {
+    "id":3,
+    "nameUz": "Namangan viloyati",
+    "nameRu": "Наманганская область",
+    "nameEn": "Namangan Region",
+    "slug": "namangan-region"
+  }
+]

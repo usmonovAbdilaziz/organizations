@@ -101,3 +101,13 @@ postgres clasterini ishga tushurish
 ```
 sudo pg_ctlcluster 18 main start
 ```
+
+postgres db ga kirish sudo -u postgres psql
+
+```
+npx prisma generate
+npx prisma migrate dev --name init
+npx prisma db push
+yarn prisma db seed
+npx prisma studio
+```

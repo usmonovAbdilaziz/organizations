@@ -14,15 +14,48 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model WorkingSchedule {
+  id String @id @default(cuid())
+
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  day WeekDay
+
+  isClosed Boolean @default(false)
+
+  periods WorkingPeriod[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([branchId, day])
+}
+
+model WorkingPeriod {
+  id String @id @default(cuid())
+
+  scheduleId String
+  schedule   WorkingSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  startTime String
+  endTime   String
+
+  periodType WorkingPeriodType @default(WORK)
+}
+
 model User {
-  id           String   @id @default(uuid())
-  phoneNumber  String   @unique // Telefon raqami uchun String yaxshi (masalan: +998...)
-  username     String   @unique
-  passwordHash String?
-  passwordSalt String?
-  fullName     String?
-  telegramId   String?  @unique
-  role         UserRole @default(CLIENT)
+  id          String   @id @default(uuid())
+  phoneNumber String   @unique // Telefon raqami uchun String yaxshi (masalan: +998...)
+  username    String   @unique
+  password    String?
+  fullName    String?
+  telegramId  String?  @unique
+  role        UserRole @default(CLIENT)
+  email       String?  @unique
+  avatar      String?
+
+  status Status @default(ACTIVE)
 
   organizationId String? // Agar foydalanuvchi biror tashkilotga tegishli bo'lsa
   branchId       String? // Agar foydalanuvchi aniq bir filialda ishlasa
@@ -60,6 +93,7 @@ model RecoveryToken {
 model Organization {
   id           String                @id @default(cuid())
   name         String
+  slug         String?               @unique // SEO friendly URL identifikatori
   type         OrganizationType      @default(RESTAURANT)
   description  String?               @db.Text
   logo         String? // Logo uchun URL
@@ -68,57 +102,321 @@ model Organization {
   orgStructure OrganizationStructure @default(MCHJ) // Tashkilot tuzilishi (masalan: "LLC", "JSC", "Sole Proprietorship")
   isActive     Boolean               @default(true)
 
+  // SEO / rating aggregatlari (Review'lardan hisoblanadi)
+  ratingAvg   Float @default(0)
+  ratingCount Int   @default(0)
+
   // Bog'liqliklar
   users      User[] // Tashkilot egalari/adminlari
   branches   Branch[] // Tashkilot filiallari
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
 
+  reviews Review[]
+  gallery OrganizationImage[]
+
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  organizationServices OrganizationService[]
+
+  @@index([categoryId])
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Review {
+  id String @id @default(cuid())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  authorName String
+  authorId   String?
+  rating     Int // 1..5
+  comment    String? @db.Text
+
+  status ReviewStatus @default(PUBLISHED)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([status])
+}
+
+model OrganizationImage {
+  id String @id @default(cuid())
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  url       String
+  altUz     String?
+  altRu     String?
+  altEn     String?
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId])
 }
 
 model Branch {
-  id      String  @id @default(cuid())
-  name    String // Filial nomi (masalan: "Chilonzor filiali")
-  address String? // To'liq manzili
+  id String @id @default(cuid())
 
-  // Geolokatsiya
-  lat          Float // Latitude (Kenglik)
-  long         Float // Longitude (Uzunlik)
-  code         Int // Filial kodi (masalan: 101, 102, ...)
-  // Aloqa
-  phone        String?
-  workingHours String? // Masalan: "09:00-22:00"
-
-  // Bog'liqliklar
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  staff          User[]
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  regionId String
+  region   Region @relation(fields: [regionId], references: [id])
+
+  districtId String
+  district   District @relation(fields: [districtId], references: [id])
+  users      User[]
+  name       String
+  address    String?
+
+  lat  Float
+  long Float
+
+  WorkingSchedule WorkingSchedule[]
+  phone           String
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 }
 
 model Category {
-  id   String  @id @default(cuid()) //id
-  name String //categoriya nomi Restoran Mehmonxona Dorixona Universitet
-  slug String  @unique // URL uchun (masalan: "milliy-taomlar") URL uchun ishlatiladi. Har doim unikal bo'lishi kerak.
-  icon String? // Categoriya uchun rasm yoki icon nomi.Kategoriya ikonkasini saqlaydi.
-  image String? //categoriya rasmi
+  id String @id @default(cuid())
 
-  isActive Boolean @default(true)//categoriya faoliyati
-  order    Int     @default(0) //categoriyalar tartibi. Chiqarilish tartibini belgilaydi.orderBy: { order: "asc"}
-  // O'z-o'ziga bog'liqlik (Parent-Child)
-  parentId      String? // parent qilish
-  parent        Category?  @relation("SubCategories", fields: [parentId], references: [id])
-  subCategories Category[] @relation("SubCategories")
+  parentId String?
 
-  // Tashkilotlar bilan bog'liqlik
+  parent Category? @relation("CategoryChildren", fields: [parentId], references: [id])
+
+  children Category[] @relation("CategoryChildren")
+
+  slug String @unique
+
+  icon String?
+
+  image String?
+
+  sortOrder Int @default(0)
+
+  isFeatured Boolean @default(false)
+
+  status Status @default(ACTIVE)
+
+  nameUz String
+  nameRu String
+  nameEn String
+
+  shortDescriptionUz String?
+  shortDescriptionRu String?
+  shortDescriptionEn String?
+
+  descriptionUz String? @db.Text
+  descriptionRu String? @db.Text
+  descriptionEn String? @db.Text
+
   organizations Organization[]
+
+  services Service[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([parentId])
+  @@index([status])
+  @@index([sortOrder])
+}
+
+model Service {
+  id String @id @default(cuid())
+
+  categoryId String
+
+  category Category @relation(fields: [categoryId], references: [id])
+
+  slug String @unique
+
+  icon String?
+
+  nameUz String
+  nameRu String
+  nameEn String
+
+  descriptionUz String? @db.Text
+  descriptionRu String? @db.Text
+  descriptionEn String? @db.Text
+
+  organizationServices OrganizationService[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([categoryId])
+}
+
+model OrganizationService {
+  id String @id @default(cuid())
+
+  organizationId String
+  serviceId      String
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  service      Service      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([organizationId, serviceId])
+  @@index([organizationId])
+  @@index([serviceId])
+}
+model Seo {
+  id String @id @default(cuid())
+
+  /// Qaysi entity uchun
+  entityType SeoEntity
+  entityId   String
+
+  // =========================
+  // Meta Title
+  // =========================
+  titleUz String? @db.VarChar(255)
+  titleRu String? @db.VarChar(255)
+  titleEn String? @db.VarChar(255)
+
+  // =========================
+  // Meta Description
+  // =========================
+  descriptionUz String? @db.Text
+  descriptionRu String? @db.Text
+  descriptionEn String? @db.Text
+
+  // =========================
+  // Keywords
+  // =========================
+  keywordsUz String? @db.Text
+  keywordsRu String? @db.Text
+  keywordsEn String? @db.Text
+
+  // =========================
+  // Canonical
+  // =========================
+  canonical String?
+
+  // index,follow
+  robots String? @default("index,follow")
+
+  // =========================
+  // OpenGraph
+  // =========================
+  ogTitleUz String?
+  ogTitleRu String?
+  ogTitleEn String?
+
+  ogDescriptionUz String? @db.Text
+  ogDescriptionRu String? @db.Text
+  ogDescriptionEn String? @db.Text
+
+  ogImage String?
+
+  // =========================
+  // Twitter
+  // =========================
+  twitterTitleUz String?
+  twitterTitleRu String?
+  twitterTitleEn String?
+
+  twitterDescriptionUz String? @db.Text
+  twitterDescriptionRu String? @db.Text
+  twitterDescriptionEn String? @db.Text
+
+  twitterImage String?
+
+  // =========================
+  // JSON-LD
+  // =========================
+  schema Json?
+
+  // =========================
+  // Auto SEO
+  // =========================
+  autoGenerated Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([entityType, entityId])
+  @@index([entityType])
+}
+model District {
+  id String @id @default(cuid())
+
+  regionId String
+  branches Branch[]
+
+  region Region @relation(fields: [regionId], references: [id])
+
+  nameUz String
+  nameRu String
+  nameEn String
+
+  slug String @unique
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([regionId])
+}
+
+model Region {
+  id String @id @default(cuid())
+
+  nameUz String
+  nameRu String
+  nameEn String
+
+  slug      String     @unique
+  branches  Branch[]
+  districts District[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+}
+enum SeoEntity {
+  CATEGORY
+  ORGANIZATION
+  SERVICE
+  REGION
+  DISTRICT
+}
+enum ReviewStatus {
+  PENDING
+  PUBLISHED
+  REJECTED
+}
+
+enum WorkingPeriodType {
+  WORK
+  LUNCH
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum Language {
+  UZ
+  RU
+  EN
 }
 
 enum OrganizationStructure {
@@ -132,6 +430,27 @@ enum OrganizationStructure {
   DUK
   MU
   FILIAL
+}
+
+enum OrganizationVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum WeekDay {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
 }
 
 //enums

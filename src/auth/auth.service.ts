@@ -5,22 +5,23 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma';
 import { TokenService } from 'src/utils/token';
-import { verifyPassword } from './utils/password';
 import { TokenPayload } from 'src/types/token';
 import { errorResponse } from 'src/utils/response';
+import { PasswordService } from './utils/password';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
-  ) {}
+    private readonly passwordService:PasswordService
+  ) { }
 
   /**
    * Login — username + password orqali tizimga kirish.
    * Muvaffaqiyatli bo'lsa access_token qaytaradi.
    */
-  async login(username: string, password: string) {
+  async login(username: string, passwords: string) {
     try {
       const user = await this.prisma.user.findUnique({
         where: { username },
@@ -31,16 +32,15 @@ export class AuthService {
         throw new NotFoundException('Foydalanuvchi topilmadi');
       }
 
-      if (!user.passwordHash || !user.passwordSalt) {
+      if (!user.password) {
         throw new UnauthorizedException(
           'Parol o\'rnatilmagan. Telegram bot orqali parolni tiklang.',
         );
       }
 
-      const isValid = await verifyPassword(
-        password,
-        user.passwordSalt,
-        user.passwordHash,
+      const isValid = await this.passwordService.verify(
+        user.password,
+        passwords,
       );
 
       if (!isValid) {
@@ -56,7 +56,7 @@ export class AuthService {
       const accessToken = this.tokenService.generateAccessToken(payload);
 
       // Parol ma'lumotlarini javobdan olib tashlash
-      const { passwordHash, passwordSalt, ...safeUser } = user;
+      const { password, ...safeUser } = user;
 
       return {
         access_token: accessToken,
@@ -85,7 +85,7 @@ export class AuthService {
       }
 
       // Parol ma'lumotlarini javobdan olib tashlash
-      const { passwordHash, passwordSalt, ...safeUser } = user;
+      const { password, ...safeUser } = user;
 
       return safeUser;
     } catch (error) {
